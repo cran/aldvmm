@@ -823,8 +823,6 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  rm(stata_se, stata_yhat)
 #  rm(sumhat)
 #  
-#  rm(df)
-#  
 #  # Remove fit objects
 #  #-------------------
 #  
@@ -880,8 +878,7 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  
 
 ## ----install, eval = FALSE, echo = TRUE---------------------------------------
-#  # install.packages("devtools")
-#  devtools::install_github("pletschm/aldvmm", ref = "main")
+#  install.packages("aldvmm")
 
 ## ----data, eval = FALSE, echo = TRUE------------------------------------------
 #  temp <- tempfile()
@@ -1319,9 +1316,9 @@ ctab[nrow(ctab), 2] <- ""
 stab <- ctab
 
 # Populate tables
-for (i in tabvec){
+for (i in tabvec) {
   nr <- nrow(get(i)$table)
-  for (j in 1:(nr - 1)){
+  for (j in 1:(nr - 1)) {
     
     lltmp <- format( 
       as.numeric(gsub("[^0-9.-]", "", as.matrix(get(i)$table)[nr, 2])), 
@@ -1441,6 +1438,107 @@ print(xtable::xtable(tab_diff_se,
 
 rm(tab_diff_se)
 
+
+## ----atet-example, echo = TRUE, eval = FALSE, results = 'hide'----------------
+#  
+#  # Create treatment indicator
+#  #---------------------------
+#  
+#  df$treated <- as.numeric(df$SEX == "2")
+#  
+#  # Fit model
+#  #----------
+#  
+#  formula <- eq5d ~ treated + hr | 1
+#  
+#  fit <- aldvmm(formula,
+#                data = df,
+#                psi = c(-0.594, 0.883))
+#  
+#  # Predict treated
+#  #----------------
+#  
+#  # Subsample of treated observations
+#  tmpdf1 <- df[df$treated == 1, ]
+#  
+#  # Design matrix for treated observations
+#  X1 <- aldvmm.mm(data = tmpdf1,
+#                  formula = fit$formula,
+#                  ncmp = fit$k,
+#                  lcoef = fit$label$lcoef)
+#  
+#  # Average expected outcome of treated observations
+#  mean1 <- mean(predict(fit,
+#                  newdata = tmpdf1,
+#                  type = "fit",
+#                  se.fit = TRUE)[["yhat"]], na.rm = TRUE)
+#  
+#  # Predict counterfactual
+#  #-----------------------
+#  
+#  # Subsample of counterfactual observations
+#  tmpdf0 <- tmpdf1
+#  rm(tmpdf1)
+#  tmpdf0$treated <- 0
+#  
+#  # Design matrix for counterfactual observations
+#  X0 <- aldvmm.mm(data = tmpdf0,
+#                  formula = fit$formula,
+#                  ncmp = fit$k,
+#                  lcoef = fit$label$lcoef)
+#  
+#  # Average expected outcome of counterfactual osbervations
+#  mean0 <- mean(predict(fit,
+#                  newdata = tmpdf0,
+#                  type = "fit",
+#                  se.fit = TRUE)[["yhat"]], na.rm = TRUE)
+#  
+#  rm(tmpdf0)
+#  
+#  # Standard error of ATET
+#  #-----------------------
+#  
+#  atet.grad <- numDeriv::jacobian(func = function(z) {
+#  
+#    yhat1 <- aldvmm.pred(par   = z,
+#                         X     = X1,
+#                         y     = rep(0, nrow(X1[[1]])),
+#                         psi   = fit$psi,
+#                         ncmp  = fit$k,
+#                         dist  = fit$dist,
+#                         lcoef = fit$label$lcoef,
+#                         lcmp  = fit$label$lcmp,
+#                         lcpar = fit$label$lcpar)[["yhat"]]
+#  
+#    yhat0 <- aldvmm.pred(par   = z,
+#                X     = X0,
+#                y     = rep(0, nrow(X0[[1]])),
+#                psi   = fit$psi,
+#                ncmp  = fit$k,
+#                dist  = fit$dist,
+#                lcoef = fit$label$lcoef,
+#                lcmp  = fit$label$lcmp,
+#                lcpar = fit$label$lcpar)[["yhat"]]
+#  
+#    mean(yhat1 - yhat0, na.rm = TRUE)
+#  
+#  },
+#  x = fit$coef)
+#  
+#  se.atet <- sqrt(atet.grad %*% fit$cov %*% t(atet.grad))
+#  
+#  # Summarize
+#  #----------
+#  
+#  out <- data.frame(atet = mean1 - mean0,
+#                    se = se.atet,
+#                    z = (mean1 - mean0) / se.atet)
+#  out$p <- 2*stats::pnorm(abs(out$z), lower.tail = FALSE)
+#  out$ul <- out$atet + stats::qnorm((1 + 0.95)/2) * out$se
+#  out$ll <- out$atet - stats::qnorm((1 + 0.95)/2) * out$se
+#  
+#  print(out)
+#  
 
 ## ----tab-comp-cov, echo = FALSE, results = 'asis'-----------------------------
 
@@ -1584,7 +1682,8 @@ rm(plot_comp_mhl3)
 #  aldvmm eq5d hr, ncomp(2) inim(cons)
 #  
 #  * (4) Reference case 2 user-defined initial values
-#  matrix  input start = (.14801581, .22614716, .30502755, -.40293118, 0, -.70755741, -2.4541401, -1.2632051)
+#  matrix  input start = (.14801581, .22614716, .30502755, -.40293118, 0,
+#                         -.70755741, -2.4541401, -1.2632051)
 #  aldvmm eq5d hr, ncomp(2) prob(hr) from(start)
 
 ## ----end, echo = FALSE, results = 'hide'--------------------------------------

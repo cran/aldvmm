@@ -66,7 +66,7 @@ predict.aldvmm <- function(object,
   
   # Add missing predictions for incomplete observations in newdata
   pred <- list()
-  pred[["yhat"]] <- rep(NA,times = nrow(newdata))
+  pred[["yhat"]] <- rep(NA, times = nrow(newdata))
   names(pred[["yhat"]]) <- rownames(newdata)
   
   pred[["yhat"]][names(tmp[["yhat"]])] <- tmp[['yhat']]
@@ -78,7 +78,7 @@ predict.aldvmm <- function(object,
     # Standard errors
     tmp <- list()
     tmp <- aldvmm.sefit(par     = object[["coef"]],
-                        yhat    = object[["pred"]][["yhat"]],
+                        yhat    = pred[["yhat"]],
                         X       = mm,
                         type    = type,
                         formula = object[["formula"]],
@@ -94,7 +94,7 @@ predict.aldvmm <- function(object,
     
     # Add missing standard errors and confidence bands for incomplete 
     # observations in newdata
-    pred[["se.fit"]] <- rep(NA,times = nrow(newdata))
+    pred[["se.fit"]] <- rep(NA, times = nrow(newdata))
     names(pred[["se.fit"]]) <- rownames(newdata)
     pred[["se.fit"]][names(tmp[["se.fit"]])] <- tmp[['se.fit']]
     

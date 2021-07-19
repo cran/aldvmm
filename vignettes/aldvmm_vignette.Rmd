@@ -853,8 +853,6 @@ rm(tab_diff_se, tab_diff_yhat)
 rm(stata_se, stata_yhat)
 rm(sumhat)
 
-rm(df)
-
 # Remove fit objects
 #-------------------
 
@@ -917,7 +915,7 @@ rm(tab_sum_stata4)
 
 Health-related quality of life is a key outcome in health technology assessments because it is patient-relevant and it is needed to calculate quality-adjusted life years. Quality of life instruments typically measure health problems in multiple domains using ordinal Likert scales. Value sets or valuation functions convert these profiles of ordinal measures into cardinal health-related utilities between 1 (perfect health) and minus infinity, where 0 represents death, and negative values represent health states worse than death. Because 100% quality of life represents perfect health, health state utilities are limited at 1. The lowest possible utility in a local value set further defines a lower limit of health state utilities in a local population. Thus, health state utilities are limited dependent variables. In addition, health state utilities often show gaps between 1 and the next smaller utility in the value set. These gaps occur more frequently in  quality of life instruments with few levels in the Likert scales such as the EQ-5D-3L [@Mulhern2018]. A last but important particularity of health state utilities is that they can be the consequence of multiple latent classes, or they can exhibit multi-modal marginal densities [@HernandezAlava2014].
 
-Adjusted limited dependent variable mixture models are finite mixtures of normal distributions that account for limits, gaps between 1 and the next smaller utility value and multi-modality [@HernandezAlava2012; @HernandezAlava2013; @HernandezAlava2014; @HernandezAlava2015; @Mukuria2019]. These features can improve empirical fit, parameter identification and predictive accuracy compared to standard regression models. Thus, adjusted limited dependent variable mixture models are particularly useful for mapping studies [@Gray2018a; @Gray2018; @Dixon2020; @Yang2019; @Xu2020; @Fuller2017; @Pennington2020] but can also improve the identification of incremental and average marginal effects of medical interventions or health problems (e.g. @Hvidberg2016).
+Adjusted limited dependent variable mixture models are finite mixtures of normal distributions that account for limits, gaps between 1 and the next smaller utility value and multi-modality [@HernandezAlava2012; @HernandezAlava2013; @HernandezAlava2014; @HernandezAlava2015; @Mukuria2019]. These features can improve empirical fit, parameter identification and predictive accuracy compared to standard regression models. Thus, adjusted limited dependent variable mixture models are particularly useful for mapping studies [@Gray2018a; @Gray2018; @Dixon2020; @Yang2019; @Xu2020; @Fuller2017; @Pennington2020].
 
 The R 'aldvmm' package is an implementation of the adjusted limited dependent variable model mixture model proposed by @HernandezAlava2015 using normal component distributions and a multinomial logit model of probabilities of component membership.
 
@@ -981,11 +979,10 @@ The aldvmm() function returns an object of S3 class "aldvmm" for which methods f
 
 # Installation
 
-The 'aldvmm' package can be installed from github using the function install_github() from the 'devtools' package.
+The 'aldvmm' package can be installed from cran.
 
 ```{r install, eval = FALSE, echo = TRUE}
-# install.packages("devtools")
-devtools::install_github("pletschm/aldvmm", ref = "main")
+install.packages("aldvmm")
 ```
 
 # Data
@@ -1027,7 +1024,7 @@ load("textout.RData")
 
 ```
 
-The data includes `r format(textout$ncplt, big.mark="'")` observations with complete information on patients' post-operative utilities, Oxford Hip Scores, age and sex. Like @HernandezAlava2015, we draw a 30% sub-sample of `r format(textout$nspl, big.mark="'")` observations from the population of complete observations of these variables. Although we follow the same approach as  @HernandezAlava2015 in the preparation of the data, our random sample is not identical to the data used in their study. Post-operative EQ-5D-3L utilities from English value sets [@Dolan1997] show a bimodal distribution, limits at -0.594 and 1 and a gap between 1 and 0.883 (figure \@ref(fig:plot-hist-obs)).
+The data includes `r format(textout$ncplt, big.mark="'")` observations with complete information on patients' post-operative utilities, Oxford Hip Scores, age and sex. Like @HernandezAlava2015, we draw a 30% sub-sample of `r format(textout$nspl, big.mark="'")` observations from the population of complete observations of these variables. Although we follow a similar approach in data preparation preparation as  @HernandezAlava2015, our random sample is not identical to the data used in their study. Post-operative EQ-5D-3L utilities from English value sets [@Dolan1997] show a bimodal distribution, limits at -0.594 and 1 and a gap between 1 and 0.883 (figure \@ref(fig:plot-hist-obs)).
 
 ```{r plot-hist-obs, echo = FALSE, results = 'asis', fig.height = 2.9, fig.width = 6, fig.cap = "Frequency distribtution of observed EQ-5D-3L utilities"}
 
@@ -1095,6 +1092,7 @@ textout[["mod1bfgs"]][["intp1"]] <- format(
 )
 
 ```
+
 We obtain a summary table of regression results using the generic function summary(). The model converges at a log-likelihood of `r textout[["mod1bfgs"]][["ll"]]` and an Akaike information criterion value of `r textout[["mod1bfgs"]][["aic"]]` (table \@ref(tab:tab-sum-mod1bfgs)).
 
 The coefficients of the intercept and covariates for the expected values $E[y|c, X]$ of the normal distributions can be interpreted as marginal effects on component means. 'lnsigma' denotes the natural logarithm of the estimated standard deviation $\sigma^{c}$. The coefficients of covariates in the multinomial logit model of probabilities of component membership are log-transformed relative probabilities. Our model only includes two components, and the multinomial logit model collapses to a binomial logit model. The intercept of `r textout[["mod1bfgs"]][["intp1"]]` means that the average probability of an observation in the data to belong to component 1 is $\text{exp}(`r textout[["mod1bfgs"]][["intp1"]]`)$ or `r exp(as.numeric(textout[["mod1bfgs"]][["intp1"]]))` times the probability to belong to component 2.
@@ -1126,6 +1124,8 @@ print(plot_hist_pred)
 rm(plot_hist_pred)
 
 ```
+
+Expected values of observations in the estimation data can also be used to calculate average incremental effects or average treatment effects on the treated. Average treatment effects on the treated compare predictions for treated individuals to predictions for the same individuals without the effect of the treatment indicator. Standard errors of average treatment effects on the treated can be calculated using the delta meethod (see example code in the appendix).
 
 ### Comparison of optimization methods
 
@@ -1520,9 +1520,9 @@ ctab[nrow(ctab), 2] <- ""
 stab <- ctab
 
 # Populate tables
-for (i in tabvec){
+for (i in tabvec) {
   nr <- nrow(get(i)$table)
-  for (j in 1:(nr - 1)){
+  for (j in 1:(nr - 1)) {
     
     lltmp <- format( 
       as.numeric(gsub("[^0-9.-]", "", as.matrix(get(i)$table)[nr, 2])), 
@@ -1586,7 +1586,7 @@ rm(ctab, stab, lindex, tabvec)
 
 ```
 
-Fitted values show very similar marginal distributions on both platforms (figure \@ref(fig:box-pred-yhat-stata)). R does not return fitted values in reference case 2. The summary statistics of differences in fitted values between R and STATA\textsuperscript{\textregistered} suggest that individual predictions are quite similar across platforms as well (table \@ref(tab:compyhat).
+Fitted values show very similar marginal distributions on both platforms (figure \@ref(fig:box-pred-yhat-stata)). R does not return fitted values in reference case 2. The summary statistics of differences in fitted values between R and STATA\textsuperscript{\textregistered} suggest that individual predictions are quite similar across platforms as well (table \@ref(tab:compyhat)).
 
 Standard errors of fitted values differ visibly between platforms (figure \@ref(fig:box-pred-se-stata) and table \@ref(tab:compse)). The difference is particularly pronounced in reference case 1, but the standard errors from STATA\textsuperscript{\textregistered} seem quite extreme compared to all other reference cases. R does not return standard errors of fitted values in reference case 2.
 
@@ -1669,7 +1669,7 @@ Although coefficients can be interpreted as marginal effects within each compone
 
 In situations with repeated utility measures, the 'aldvmm' package only allows fixed effects estimations with individual/group and time fixed effects which can be an important limitation in the analysis of clinical data. However, time fixed effects can be an appropriate modeling strategy in the presence of general time trends and dynamic selection in the population, e.g. because health state utilities decrease over time and treated individuals survive longer and thus are over-represented in later measurements. In light of the trade-off between the efficiency of the random effects model and the causal interpretation of treatment effects in a fixed-effects model it is recommended to assess the uncorrelatedness of random effects with the treatment using the Hausman test in a generalized linear model.
 
-Possible extensions of 'aldvmm' could include adjusted limited dependent variable beta mixture models [@Gray2018b], a mixed model implementation for repeated measures and a method for the calculation of average marginal effects and their standard errors.
+Possible extensions of the 'aldvmm' package could include adjusted limited dependent variable beta mixture models [@Gray2018b], a mixed model implementation for repeated measures and a method for the calculation of average marginal effects and their standard errors.
 
 \newpage
 
@@ -1679,6 +1679,111 @@ Possible extensions of 'aldvmm' could include adjusted limited dependent variabl
 
 \newpage
 # Appendix
+
+## Example calculation of average treatment effects on the treated
+
+```{r atet-example, echo = TRUE, eval = FALSE, results = 'hide'}
+
+# Create treatment indicator
+#---------------------------
+
+df$treated <- as.numeric(df$SEX == "2")
+
+# Fit model
+#----------
+
+formula <- eq5d ~ treated + hr | 1
+
+fit <- aldvmm(formula,
+              data = df,
+              psi = c(-0.594, 0.883))
+
+# Predict treated
+#----------------
+
+# Subsample of treated observations
+tmpdf1 <- df[df$treated == 1, ]
+
+# Design matrix for treated observations
+X1 <- aldvmm.mm(data = tmpdf1,
+                formula = fit$formula,
+                ncmp = fit$k,
+                lcoef = fit$label$lcoef)
+
+# Average expected outcome of treated observations
+mean1 <- mean(predict(fit,
+                newdata = tmpdf1,
+                type = "fit",
+                se.fit = TRUE)[["yhat"]], na.rm = TRUE)
+
+# Predict counterfactual
+#-----------------------
+
+# Subsample of counterfactual observations
+tmpdf0 <- tmpdf1
+rm(tmpdf1)
+tmpdf0$treated <- 0
+
+# Design matrix for counterfactual observations
+X0 <- aldvmm.mm(data = tmpdf0,
+                formula = fit$formula,
+                ncmp = fit$k,
+                lcoef = fit$label$lcoef)
+
+# Average expected outcome of counterfactual osbervations
+mean0 <- mean(predict(fit,
+                newdata = tmpdf0,
+                type = "fit",
+                se.fit = TRUE)[["yhat"]], na.rm = TRUE)
+
+rm(tmpdf0)
+
+# Standard error of ATET
+#-----------------------
+
+atet.grad <- numDeriv::jacobian(func = function(z) {
+  
+  yhat1 <- aldvmm.pred(par   = z,
+                       X     = X1,
+                       y     = rep(0, nrow(X1[[1]])),
+                       psi   = fit$psi,
+                       ncmp  = fit$k,
+                       dist  = fit$dist,
+                       lcoef = fit$label$lcoef,
+                       lcmp  = fit$label$lcmp,
+                       lcpar = fit$label$lcpar)[["yhat"]]
+  
+  yhat0 <- aldvmm.pred(par   = z,
+              X     = X0,
+              y     = rep(0, nrow(X0[[1]])),
+              psi   = fit$psi,
+              ncmp  = fit$k,
+              dist  = fit$dist,
+              lcoef = fit$label$lcoef,
+              lcmp  = fit$label$lcmp,
+              lcpar = fit$label$lcpar)[["yhat"]]
+  
+  mean(yhat1 - yhat0, na.rm = TRUE)
+  
+},
+x = fit$coef)
+
+se.atet <- sqrt(atet.grad %*% fit$cov %*% t(atet.grad))
+
+# Summarize
+#----------
+
+out <- data.frame(atet = mean1 - mean0,
+                  se = se.atet,
+                  z = (mean1 - mean0) / se.atet)
+out$p <- 2*stats::pnorm(abs(out$z), lower.tail = FALSE)
+out$ul <- out$atet + stats::qnorm((1 + 0.95)/2) * out$se
+out$ll <- out$atet - stats::qnorm((1 + 0.95)/2) * out$se
+
+print(out)
+
+```
+
 
 ## Covariance matrices across optimization methods
 
@@ -1842,7 +1947,8 @@ aldvmm eq5d hr, ncomp(2) from(a) c(1 2 3)
 aldvmm eq5d hr, ncomp(2) inim(cons)
 
 * (4) Reference case 2 user-defined initial values
-matrix  input start = (.14801581, .22614716, .30502755, -.40293118, 0, -.70755741, -2.4541401, -1.2632051)
+matrix  input start = (.14801581, .22614716, .30502755, -.40293118, 0, 
+                       -.70755741, -2.4541401, -1.2632051)
 aldvmm eq5d hr, ncomp(2) prob(hr) from(start)
 ```
 
