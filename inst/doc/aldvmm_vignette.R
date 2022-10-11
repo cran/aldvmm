@@ -20,24 +20,24 @@ source("est_mhl.R")
 #--------------------
 
 ggplot_theme <- theme(panel.background = element_rect(fill = "white",
-                                                                        colour = "white",
-                                                                        size = 0.5, 
-                                                                        linetype = "solid"),
-                               panel.grid.major = element_blank(), 
-                               panel.grid.minor = element_blank(),
-                               panel.grid.major.y = element_line(size = 0.25, 
-                                                                          linetype = 'dashed', 
-                                                                          colour = "grey"),
-                               text = element_text(size = 11),
-                               plot.margin = margin(10, 10, 0, 10),
-                               axis.line = element_line(size = 0.25),
-                               axis.text = element_text(size = 11),
-                               #legend.title = element_text(size = 11),
-                               legend.title = element_blank(),
-                               legend.text = element_text(size = 11),
-                               legend.position = 'bottom',
-                               legend.direction = "vertical",
-                               legend.key = element_blank())
+                                                      colour = "white",
+                                                      #linewidth = 0.5, 
+                                                      linetype = "solid"),
+                      panel.grid.major = element_blank(), 
+                      panel.grid.minor = element_blank(),
+                      panel.grid.major.y = element_line(#linewidth = 0.25, 
+                        linetype = 'dashed', 
+                        colour = "grey"),
+                      text = element_text(size = 11),
+                      plot.margin = margin(10, 10, 0, 10),
+                      #axis.line = element_line(linewidth = 0.25),
+                      axis.text = element_text(size = 11),
+                      #legend.title = element_text(size = 11),
+                      legend.title = element_blank(),
+                      legend.text = element_text(size = 11),
+                      legend.position = 'bottom',
+                      legend.direction = "vertical",
+                      legend.key = element_blank())
 
 
 ## ----load_data, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
@@ -95,8 +95,19 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  
 #  rm(textout)
 #  
+#  # Save data for plots
+#  #--------------------
+#  
+#  save(df,
+#       file = "df.RData",
+#       compress = FALSE)
+#  
+#  rm(df)
+#  
 
 ## ----calc_fit, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
+#  
+#  load("df.RData")
 #  
 #  #------------------------------------------------------------------------------
 #  # Fit model 1
@@ -157,11 +168,11 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  # With standard errors of fitted values for comparison to STATA
 #  
 #  fit1_nlminb <- aldvmm::aldvmm(data = df,
-#                              formula = formula,
-#                              psi = c(0.883, -0.594),
-#                              ncmp = 2,
-#                              optim.method = "nlminb",
-#                              se.fit = TRUE)
+#                                formula = formula,
+#                                psi = c(0.883, -0.594),
+#                                ncmp = 2,
+#                                optim.method = "nlminb",
+#                                se.fit = TRUE)
 #  
 #  save(fit1_nlminb,
 #       file = "fit1_nlminb.RData",
@@ -299,6 +310,11 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 
 ## ----calc_plot, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
 #  
+#  # Load data
+#  #----------
+#  
+#  load("df.RData")
+#  
 #  # Histogram of observed outcomes
 #  #-------------------------------
 #  
@@ -309,9 +325,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #    scale_y_continuous(labels = scales::comma) +
 #    ggplot_theme
 #  
-#  save(plot_hist_obs,
-#       file = "plot_hist_obs.RData",
-#       compress = TRUE)
+#  ggsave("plot_hist_obs.eps",
+#         width = 6,
+#         height = 2.9)
 #  
 #  rm(plot_hist_obs)
 #  
@@ -329,9 +345,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #    scale_y_continuous(labels = scales::comma) +
 #    ggplot_theme
 #  
-#  save(plot_hist_pred,
-#       file = "plot_hist_pred.RData",
-#       compress = TRUE)
+#  ggsave("plot_hist_pred.eps",
+#         width = 6,
+#         height = 2.9)
 #  
 #  rm(plotdf, plot_hist_pred, fit1_all)
 #  
@@ -344,16 +360,20 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  b <- fit1_all[["fit"]][["zero"]][["hjn"]][["pred"]][["yhat"]]
 #  c <- fit1_all[["fit"]][["zero"]][["nlminb"]][["pred"]][["yhat"]]
 #  
-#  tmpdf <- as.data.frame(rbind(cbind(y = c, bl = c, alg = "45° line"),
-#                               cbind(y = a, bl = c, alg = "Nelder-Mead"),
-#                               cbind(y = b, bl = c, alg = "hjn")))
+#  tmpdf <- as.data.frame(rbind(cbind(out = c, bl = c, alg = "45 line"),
+#                               cbind(out = a, bl = c, alg = "Nelder-Mead"),
+#                               cbind(out = b, bl = c, alg = "hjn")))
 #  
-#  tmpdf$y <- as.numeric(as.character(tmpdf$y))
-#  tmpdf$bl <- as.numeric(as.character(tmpdf$bl))
+#  tmpdf <- unique(tmpdf)
+#  tmpdf <- tmpdf[order(tmpdf$bl), ]
 #  
-#  plot_comp_pred <- ggplot(tmpdf, aes(x = bl, y = y, group = alg)) +
+#  tmpdf[, "out"] <- as.numeric(as.character(tmpdf[, "out"]))
+#  tmpdf[, "bl"] <- as.numeric(as.character(tmpdf[, "bl"]))
+#  tmpdf[, "alg"] <- as.factor(tmpdf[, "alg"])
+#  
+#  plot_comp_pred <- ggplot2::ggplot(tmpdf, aes(x = bl, y = out, group = alg)) +
 #    geom_line(aes(linetype = alg)) +
-#    scale_linetype_manual(values=c("solid", "dashed", "dotted")) +
+#    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
 #    scale_x_continuous(breaks = seq(-0.2, 1, by = 0.1)) +
 #    xlab("E[y|X] nlminb") +
 #    ylab("E[y|X]") +
@@ -362,9 +382,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #    theme(panel.grid.major.x = element_blank(),
 #          panel.grid.major.y = element_blank())
 #  
-#  save(plot_comp_pred,
-#       file = "plot_comp_pred.RData",
-#       compress = TRUE)
+#  ggsave("plot_comp_pred.eps",
+#         width = 6,
+#         height = 2.9)
 #  
 #  rm(fit1_all, a, b, c, tmpdf, plot_comp_pred)
 #  
@@ -376,25 +396,31 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  set.seed(101010101)
 #  plot_comp_mhl1 <- est_mhl(fit1_all[["fit"]][["zero"]][["Nelder-Mead"]],
 #                            ngroup = 10)
-#  save(plot_comp_mhl1,
-#       file = "plot_comp_mhl1.RData",
-#       compress = TRUE)
+#  
+#  ggsave("plot_comp_mhl1.eps",
+#         width = 6,
+#         height = 2.9)
+#  
 #  rm(plot_comp_mhl1)
 #  
 #  set.seed(101010101)
 #  plot_comp_mhl2 <- est_mhl(fit1_all[["fit"]][["zero"]][["nlminb"]],
 #                            ngroup = 10)
-#  save(plot_comp_mhl2,
-#       file = "plot_comp_mhl2.RData",
-#       compress = TRUE)
+#  
+#  ggsave("plot_comp_mhl2.eps",
+#         width = 6,
+#         height = 2.9)
+#  
 #  rm(plot_comp_mhl2)
 #  
 #  set.seed(101010101)
 #  plot_comp_mhl3 <- est_mhl(fit1_all[["fit"]][["zero"]][["hjn"]],
 #                            ngroup = 10)
-#  save(plot_comp_mhl3,
-#       file = "plot_comp_mhl3.RData",
-#       compress = TRUE)
+#  
+#  ggsave("plot_comp_mhl3.eps",
+#         width = 6,
+#         height = 2.9)
+#  
 #  rm(plot_comp_mhl3)
 #  
 #  rm(fit1_all)
@@ -439,9 +465,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #      coord_cartesian(ylim=c(0, 5), xlim = c(-1, 1)) +
 #      ggplot_theme
 #  
-#    save(plot_dens,
-#         file = paste0("plot_dens_", i, ".RData"),
-#         compress = TRUE)
+#    ggsave(paste0("plot_dens_", i,".eps"),
+#           width = 6,
+#           height = 2.9)
 #  
 #    rm(plot_dens)
 #  
@@ -491,9 +517,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  
 #  suppressWarnings(
 #    plot_box_yhat <- ggplot2::ggplot(plotdf,
-#                            aes(x = variable,
-#                                y = as.numeric(value),
-#                                fill = software)) +
+#                                     aes(x = variable,
+#                                         y = as.numeric(value),
+#                                         fill = software)) +
 #      geom_boxplot() +
 #      ylab("Fitted values") +
 #      ggplot_theme +
@@ -501,9 +527,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #      guides(fill = guide_legend(nrow = 1, byrow = TRUE))
 #  )
 #  
-#  save(plot_box_yhat,
-#       file = "plot_box_yhat.RData",
-#       compress = TRUE)
+#  ggsave("plot_box_yhat.eps",
+#         width = 6,
+#         height = 2.9)
 #  
 #  rm(plotdf, plot_box_yhat)
 #  rm(fit1_cons, fit1_cstr_stata, fit1_nlminb)
@@ -561,19 +587,24 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #      guides(fill = guide_legend(nrow = 1, byrow = TRUE))
 #  )
 #  
-#  save(plot_box_se,
-#       file = "plot_box_se.RData",
-#       compress = TRUE)
+#  ggsave("plot_box_se.eps",
+#         width = 6,
+#         height = 2.9)
 #  
 #  rm(plotdf, plot_box_se)
 #  rm(fit1_cons, fit1_cstr_stata, fit1_nlminb)
 #  rm(fit2_stata)
 #  rm(stata_se, stata_se_long)
 #  rm(r_se_long)
-#  
+#  rm(df)
 #  
 
 ## ----calc_tab, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
+#  
+#  # Load data
+#  #----------
+#  
+#  load("df.RData")
 #  
 #  # Model 1, comparison of optimization methods
 #  #--------------------------------------------
@@ -779,9 +810,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  load("fit1_cons.RData")
 #  load("fit2_stata.RData")
 #  stata_yhat <- read.table("stata_yhat.csv",
-#                         header = TRUE,
-#                         sep = ";",
-#                         dec = ".")
+#                           header = TRUE,
+#                           sep = ";",
+#                           dec = ".")
 #  stata_se <- read.table("stata_se.csv",
 #                         header = TRUE,
 #                         sep = ";",
@@ -828,6 +859,7 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  
 #  # file.remove(dir(path = ".",  pattern="fi1_"))
 #  # file.remove(dir(path = ".",  pattern="fi2_"))
+#  rm(df)
 #  
 
 ## ----calc_tab_stata, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
@@ -913,15 +945,6 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 load("textout.RData")
 
 
-## ----plot-hist-obs, echo = FALSE, results = 'asis', fig.height = 2.9, fig.width = 6, fig.cap = "Frequency distribtution of observed EQ-5D-3L utilities"----
-
-load("plot_hist_obs.RData")
-
-print(plot_hist_obs)
-
-rm(plot_hist_obs)
-
-
 ## ----model1-fit, echo = TRUE, eval = FALSE------------------------------------
 #  library("aldvmm")
 #  
@@ -982,15 +1005,6 @@ print(xtable::xtable(tab_sum_mod1bfgs$table,
       caption.placement = "top")
 
 rm(tab_sum_mod1bfgs)
-
-
-## ----plot-hist-pred, echo = FALSE, results = "asis", fig.height = 2.9, fig.width = 6,  fig.cap = "Expected values from base case model"----
-
-load("plot_hist_pred.RData")
-
-print(plot_hist_pred)
-
-rm(plot_hist_pred)
 
 
 ## ----tab-comp-ll-load, echo = FALSE-------------------------------------------
@@ -1097,42 +1111,6 @@ rm(tab_comp_coef, tab_sum_mod1)
 #                           n = n2,
 #                           args = list(mean = mean2, sd = sd2))
 #  
-
-## ----fig-comp-dens1, echo = FALSE, results = "asis", fig.height = 2.9, fig.width = 6,  fig.cap = 'Densities in components based on "Nelder-Mead" parameter estimates (observation with population average Oxford Hip Score 3.8489)'----
-
-load("plot_dens_Nelder-Mead.RData")
-
-print(plot_dens)
-
-rm(plot_dens)
-
-
-## ----fig-comp-dens2, echo = FALSE, results = "asis", fig.height = 2.9, fig.width = 6, fig.cap = 'Densities in components based on "nlminb" parameter estimates (observation with population average Oxford Hip Score 3.8489)'----
-
-load("plot_dens_nlminb.RData")
-
-print(plot_dens)
-
-rm(plot_dens)
-
-
-## ----fig-comp-dens3, echo = FALSE, results = "asis", fig.height = 2.9, fig.width = 6, fig.cap = 'Densities in components based on "hjn" parameter estimates (observation with population average Oxford Hip Score 3.8489)'----
-
-load("plot_dens_hjn.RData")
-
-print(plot_dens)
-
-rm(plot_dens)
-
-
-## ----plot-comp-pred, echo = FALSE, results = "asis", fig.height = 2.9, fig.width = 6, fig.cap = 'Expected values from model 1, "Nelder-Mead" and "hjn" versus "nlminb" with zero starting values'----
-
-load("plot_comp_pred.RData")
-
-print(plot_comp_pred)
-
-rm(plot_comp_pred)
-
 
 ## ----tab-sum-cstr-load, echo = FALSE, results = "asis"------------------------
 
@@ -1324,7 +1302,7 @@ for (i in tabvec) {
       as.numeric(gsub("[^0-9.-]", "", as.matrix(get(i)$table)[nr, 2])), 
       big.mark = "'"
     )
-
+    
     ctab[j, 2 + match(i, tabvec)] <- as.matrix(get(i)$table)[j, 3]
     ctab[nrow(ctab), 2 + match(i, tabvec)] <- lltmp
     ctab[nrow(ctab), 2] <- "ll"
@@ -1332,7 +1310,7 @@ for (i in tabvec) {
     stab[j, 2 + match(i, tabvec)] <- as.matrix(get(i)$table)[j, 4]
     stab[nrow(stab), 2 + match(i, tabvec)] <- lltmp
     stab[nrow(stab), 2] <- "ll"
-
+    
   }
   rm(nr)
 }
@@ -1351,8 +1329,8 @@ lindex[1] <- -1
 
 print(xtable::xtable(ctab,
                      align = paste0("lll", 
-                                   paste(rep("r", length(tabvec)), 
-                                         collapse = "")),
+                                    paste(rep("r", length(tabvec)), 
+                                          collapse = "")),
                      label = "tab:tab-comp-stata",
                      caption = "Comparison of point estimates to the results of the STATA package"),
       type = "latex",
@@ -1364,8 +1342,8 @@ print(xtable::xtable(ctab,
 
 print(xtable::xtable(stab,
                      align = paste0("lll", 
-                                   paste(rep("r", length(tabvec)), 
-                                         collapse = "")),
+                                    paste(rep("r", length(tabvec)), 
+                                          collapse = "")),
                      label = "tab:tab-compse-stata",
                      caption = "Comparison of standard errors to the results of the STATA package."),
       type = "latex",
@@ -1379,24 +1357,6 @@ print(xtable::xtable(stab,
 rm(tab_sum_const, tab_sum_cstata, tab_sum_mod1nlminb, tab_sum_mod2stata,
    tab_sum_stata1, tab_sum_stata2, tab_sum_stata3, tab_sum_stata4)
 rm(ctab, stab, lindex, tabvec)
-
-
-## ----box-pred-yhat-stata, echo = FALSE, results = "asis", warning = FALSE, fig.height = 2.9, fig.width = 6, fig.cap = 'Fitted values in R and STATA'----
-
-load("plot_box_yhat.RData")
-
-suppressWarnings(print(plot_box_yhat))
-
-rm(plot_box_yhat)
-
-
-## ----box-pred-se-stata, echo = FALSE, results = "asis", warning = FALSE, fig.height = 2.9, fig.width = 6, fig.cap = 'Standard errors of fitted values in R and STATA'----
-
-load("plot_box_se.RData")
-
-suppressWarnings(print(plot_box_se))
-
-rm(plot_box_se)
 
 
 ## ----tab-pred-stata-yhat, echo = FALSE, results = "asis"----------------------
@@ -1469,9 +1429,9 @@ rm(tab_diff_se)
 #  
 #  # Average expected outcome of treated observations
 #  mean1 <- mean(predict(fit,
-#                  newdata = tmpdf1,
-#                  type = "fit",
-#                  se.fit = TRUE)[["yhat"]], na.rm = TRUE)
+#                        newdata = tmpdf1,
+#                        type = "fit",
+#                        se.fit = TRUE)[["yhat"]], na.rm = TRUE)
 #  
 #  # Predict counterfactual
 #  #-----------------------
@@ -1489,9 +1449,9 @@ rm(tab_diff_se)
 #  
 #  # Average expected outcome of counterfactual osbervations
 #  mean0 <- mean(predict(fit,
-#                  newdata = tmpdf0,
-#                  type = "fit",
-#                  se.fit = TRUE)[["yhat"]], na.rm = TRUE)
+#                        newdata = tmpdf0,
+#                        type = "fit",
+#                        se.fit = TRUE)[["yhat"]], na.rm = TRUE)
 #  
 #  rm(tmpdf0)
 #  
@@ -1511,14 +1471,14 @@ rm(tab_diff_se)
 #                         lcpar = fit$label$lcpar)[["yhat"]]
 #  
 #    yhat0 <- aldvmm.pred(par   = z,
-#                X     = X0,
-#                y     = rep(0, nrow(X0[[1]])),
-#                psi   = fit$psi,
-#                ncmp  = fit$k,
-#                dist  = fit$dist,
-#                lcoef = fit$label$lcoef,
-#                lcmp  = fit$label$lcmp,
-#                lcpar = fit$label$lcpar)[["yhat"]]
+#                         X     = X0,
+#                         y     = rep(0, nrow(X0[[1]])),
+#                         psi   = fit$psi,
+#                         ncmp  = fit$k,
+#                         dist  = fit$dist,
+#                         lcoef = fit$label$lcoef,
+#                         lcmp  = fit$label$lcmp,
+#                         lcpar = fit$label$lcpar)[["yhat"]]
 #  
 #    mean(yhat1 - yhat0, na.rm = TRUE)
 #  
@@ -1598,33 +1558,6 @@ rm(tab_comp_cov)
 #                                       y = as.numeric(value),
 #                                       group = factor(outcome))) +
 #    geom_line(aes(linetype = factor(outcome)))
-
-## ----plot-comp-mhl1, echo = FALSE, results = "asis", fig.height = 2.5, fig.width = 6, fig.cap = 'Mean residuals over deciles of expected values, "Nelder-Mead" with "zero" starting values'----
-
-load("plot_comp_mhl1.RData")
-
-print(plot_comp_mhl1)
-
-rm(plot_comp_mhl1)
-
-
-## ----plot-comp-mhl2, echo = FALSE, results = "asis", fig.height = 2.5, fig.width = 6, fig.cap = 'Mean residuals over deciles of expected values, "BFGS" with "zero" starting values'----
-
-load("plot_comp_mhl2.RData")
-
-print(plot_comp_mhl2)
-
-rm(plot_comp_mhl2)
-
-
-## ----plot-comp-mhl3, echo = FALSE, results = "asis", fig.height = 2.5, fig.width = 6, fig.cap = 'Mean residuals over deciles of expected values, "hjn" with "zero" starting values'----
-
-load("plot_comp_mhl3.RData")
-
-print(plot_comp_mhl3)
-
-rm(plot_comp_mhl3)
-
 
 ## ----tab-comp-stata-show, echo = TRUE, eval = FALSE---------------------------
 #  # (1) Reference case 1 with default optimization settings
