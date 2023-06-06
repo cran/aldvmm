@@ -141,7 +141,8 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #                       psi = c(0.883, -0.594),
 #                       ncmp = 2,
 #                       init.method = i,
-#                       optim.method = j)
+#                       optim.method = j,
+#                       model = FALSE)
 #  
 #      }, error = function(e) {
 #        return(list())
@@ -306,6 +307,7 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  rm(fit2_stata, init)
 #  
 #  rm(formula)
+#  rm(df)
 #  
 
 ## ----calc_plot, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
@@ -314,6 +316,7 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  #----------
 #  
 #  load("df.RData")
+#  load("textout.RData")
 #  
 #  # Histogram of observed outcomes
 #  #-------------------------------
@@ -860,6 +863,7 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  # file.remove(dir(path = ".",  pattern="fi1_"))
 #  # file.remove(dir(path = ".",  pattern="fi2_"))
 #  rm(df)
+#  rm(rep_tab_fit)
 #  
 
 ## ----calc_tab_stata, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
@@ -997,7 +1001,7 @@ textout[["mod1bfgs"]][["intp1"]] <- format(
 print(xtable::xtable(tab_sum_mod1bfgs$table, 
                      align = "lllrrrrrr",
                      label = "tab:tab-sum-mod1bfgs",
-                     caption = 'Regression results from model1 with "BFGS" optimization method and "zero" starting values'),
+                     caption = 'Regression results from model 1 with "BFGS" optimization method and "zero" starting values'),
       type = "latex",
       include.rownames = FALSE,
       hline.after = tab_sum_mod1bfgs$lindex,
@@ -1078,7 +1082,7 @@ load("tab_sum_mod1.RData")
 print(xtable::xtable(tab_comp_coef, 
                      align = "lllrrr",
                      label = "tab:tab-comp-coef",
-                     caption = 'Regression results of model1 with zero starting 
+                     caption = 'Regression results of model 1 with zero starting 
                      values in "Nelder-Mead", "nlminb" and "hjn" algorithms'),
       type = "latex",
       include.rownames = FALSE,
@@ -1148,7 +1152,7 @@ load("tab_sum_cstr.RData")
 print(xtable::xtable(tab_sum_cstr$table, 
                      align = "lllrrrrrr",
                      label = "tab:tab-sum-cstr",
-                     caption = 'Regression results of model1 with the "L-BFGS-B" method, parameter constraints and user-defined starting values'),
+                     caption = 'Regression results of model 1 with the "L-BFGS-B" method, parameter constraints and user-defined starting values'),
       type = "latex",
       include.rownames = FALSE,
       hline.after = tab_sum_cstr$lindex,
@@ -1208,7 +1212,7 @@ rm(tab_comp_coef)
 print(xtable::xtable(tab_sum_tobit$table, 
                      align = "lllrrrrrr",
                      label = "tab:tab-sum-tobit",
-                     caption = 'Regression results of model1 with 1 component, 
+                     caption = 'Regression results of model 1 with 1 component, 
                      zero starting values in "nlminb" algorithm'),
       type = "latex",
       include.rownames = FALSE,
@@ -1500,6 +1504,33 @@ rm(tab_diff_se)
 #  print(out)
 #  
 
+## ----sandwich-example, echo = TRUE, eval = FALSE, results = 'hide'------------
+#  
+#  # Create cluster indicator
+#  #-------------------------
+#  
+#  df$grp <- as.factor(round(0.5 + runif(nrow(df)) * 5, 0))
+#  
+#  # Fit model
+#  #----------
+#  
+#  formula <- eq5d ~ hr | 1
+#  
+#  fit <- aldvmm(formula,
+#                data = df,
+#                psi = c(-0.594, 0.883))
+#  
+#  # Calculate clustered standard errors
+#  #------------------------------------
+#  
+#  vc <- sandwich::vcovCL(fit, cluster = df$grp)
+#  
+#  # Calculate test statistics
+#  #--------------------------
+#  
+#  lmtest::coeftest(fit, vcov = vc)
+#  
+
 ## ----tab-comp-cov, echo = FALSE, results = 'asis'-----------------------------
 
 load("tab_comp_cov.RData")
@@ -1528,7 +1559,7 @@ rm(tab_comp_cov)
 #  res <- fit1_all[["zero"]][["Nelder-Mead"]][["pred"]][["res"]]
 #  
 #  # Make groups
-#  group <- as.numeric(cut(yhat, breaks = ngroup), na.rm=TRUE)
+#  group <- as.numeric(cut(yhat, breaks = ngroup), na.rm = TRUE)
 #  
 #  # Auxiliary regression
 #  aux <- stats::lm(res ~ factor(group))
