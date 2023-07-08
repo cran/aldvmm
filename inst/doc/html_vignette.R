@@ -8,6 +8,7 @@ library("xtable")
 library("ggplot2")
 library("scales")
 library("reshape2")
+library("kableExtra")
 
 # Load functions
 #---------------
@@ -15,6 +16,7 @@ library("reshape2")
 source("rep_tab_fit.R")
 source("rep_tab_stata.R")
 source("est_mhl.R")
+source("rep_tab_reg.R")
 
 # Custom ggplot theme
 #--------------------
@@ -38,6 +40,12 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
                       legend.position = 'bottom',
                       legend.direction = "vertical",
                       legend.key = element_blank())
+
+# Figure position HERE
+#---------------------
+
+knitr::opts_chunk$set(fig.pos = "!H", out.extra = "")
+warnings(file = "./R-warnings.txt")
 
 
 ## ----load_data, eval = FALSE, warning = FALSE, echo = FALSE, results = 'hide'----
@@ -328,9 +336,10 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #    scale_y_continuous(labels = scales::comma) +
 #    ggplot_theme
 #  
-#  ggsave("plot_hist_obs.eps",
+#  ggsave("plot_hist_obs.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,
+#         dpi = 150)
 #  
 #  rm(plot_hist_obs)
 #  
@@ -348,9 +357,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #    scale_y_continuous(labels = scales::comma) +
 #    ggplot_theme
 #  
-#  ggsave("plot_hist_pred.eps",
+#  ggsave("plot_hist_pred.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,        dpi = 150)
 #  
 #  rm(plotdf, plot_hist_pred, fit1_all)
 #  
@@ -359,35 +368,43 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  
 #  load("fit1_all.RData")
 #  
-#  a <- fit1_all[["fit"]][["zero"]][["Nelder-Mead"]][["pred"]][["yhat"]]
-#  b <- fit1_all[["fit"]][["zero"]][["hjn"]][["pred"]][["yhat"]]
-#  c <- fit1_all[["fit"]][["zero"]][["nlminb"]][["pred"]][["yhat"]]
+#  a <- fit1_all[["fit"]][["zero"]][["BFGS"]][["pred"]][["yhat"]]
+#  b <- fit1_all[["fit"]][["zero"]][["Nelder-Mead"]][["pred"]][["yhat"]]
+#  c <- fit1_all[["fit"]][["zero"]][["hjn"]][["pred"]][["yhat"]]
+#  d <- fit1_all[["fit"]][["zero"]][["nlminb"]][["pred"]][["yhat"]]
 #  
-#  tmpdf <- as.data.frame(rbind(cbind(out = c, bl = c, alg = "45 line"),
-#                               cbind(out = a, bl = c, alg = "Nelder-Mead"),
-#                               cbind(out = b, bl = c, alg = "hjn")))
+#  a.d <- a - d
+#  b.d <- b - d
+#  c.d <- c - d
+#  d.d <- d - d
+#  
+#  tmpdf <- as.data.frame(rbind(cbind(out = d.d, bl = d, alg = "nlminb", id = 1),
+#                               cbind(out = a.d, bl = d, alg = "BFGS vs. nlminb", id = 2),
+#                               cbind(out = b.d, bl = d, alg = "Nelder-Mead vs. nlminb", id = 3),
+#                               cbind(out = c.d, bl = d, alg = "hjn vs. nlminb", id = 4)))
 #  
 #  tmpdf <- unique(tmpdf)
-#  tmpdf <- tmpdf[order(tmpdf$bl), ]
+#  tmpdf <- tmpdf[order(tmpdf$id, tmpdf$bl), ]
 #  
 #  tmpdf[, "out"] <- as.numeric(as.character(tmpdf[, "out"]))
 #  tmpdf[, "bl"] <- as.numeric(as.character(tmpdf[, "bl"]))
-#  tmpdf[, "alg"] <- as.factor(tmpdf[, "alg"])
+#  tmpdf[, "alg"] <- factor(tmpdf[, "alg"], levels = unique(tmpdf[order(tmpdf$id), "alg"]))
 #  
-#  plot_comp_pred <- ggplot2::ggplot(tmpdf, aes(x = bl, y = out, group = alg)) +
+#  plot_comp_pred <- ggplot2::ggplot(tmpdf, aes(x = bl, y = out, group = alg, color = alg)) +
 #    geom_line(aes(linetype = alg)) +
-#    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
+#    scale_linetype_manual(values = c("solid", "dashed", "dotted", "dotdash")) +
+#    scale_color_manual(values = c("black", "green", "blue", "red")) +
 #    scale_x_continuous(breaks = seq(-0.2, 1, by = 0.1)) +
 #    xlab("E[y|X] nlminb") +
-#    ylab("E[y|X]") +
+#    ylab("Difference from E[y|X] nlminb") +
 #    guides(linetype = guide_legend(nrow = 1)) +
 #    ggplot_theme +
 #    theme(panel.grid.major.x = element_blank(),
 #          panel.grid.major.y = element_blank())
 #  
-#  ggsave("plot_comp_pred.eps",
+#  ggsave("plot_comp_pred.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,        dpi = 150)
 #  
 #  rm(fit1_all, a, b, c, tmpdf, plot_comp_pred)
 #  
@@ -397,86 +414,45 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  load("fit1_all.RData")
 #  
 #  set.seed(101010101)
-#  plot_comp_mhl1 <- est_mhl(fit1_all[["fit"]][["zero"]][["Nelder-Mead"]],
-#                            ngroup = 10)
+#  plot_comp_mhl_bfgs <- est_mhl(fit1_all[["fit"]][["zero"]][["BFGS"]],
+#                                ngroup = 10)
 #  
-#  ggsave("plot_comp_mhl1.eps",
+#  ggsave("plot_comp_mhl_bfgs.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,        dpi = 150)
 #  
-#  rm(plot_comp_mhl1)
+#  rm(plot_comp_mhl_bfgs)
 #  
 #  set.seed(101010101)
-#  plot_comp_mhl2 <- est_mhl(fit1_all[["fit"]][["zero"]][["nlminb"]],
-#                            ngroup = 10)
+#  plot_comp_mhl_nm <- est_mhl(fit1_all[["fit"]][["zero"]][["Nelder-Mead"]],
+#                              ngroup = 10)
 #  
-#  ggsave("plot_comp_mhl2.eps",
+#  ggsave("plot_comp_mhl_nm.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,        dpi = 150)
 #  
-#  rm(plot_comp_mhl2)
+#  rm(plot_comp_mhl_nm)
 #  
 #  set.seed(101010101)
-#  plot_comp_mhl3 <- est_mhl(fit1_all[["fit"]][["zero"]][["hjn"]],
-#                            ngroup = 10)
+#  plot_comp_mhl_nlminb <- est_mhl(fit1_all[["fit"]][["zero"]][["nlminb"]],
+#                                  ngroup = 10)
 #  
-#  ggsave("plot_comp_mhl3.eps",
+#  ggsave("plot_comp_mhl_nlminb.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,        dpi = 150)
 #  
-#  rm(plot_comp_mhl3)
+#  rm(plot_comp_mhl_nlminb)
 #  
-#  rm(fit1_all)
+#  set.seed(101010101)
+#  plot_comp_mhl_hjn <- est_mhl(fit1_all[["fit"]][["zero"]][["hjn"]],
+#                               ngroup = 10)
 #  
-#  # Densities model 1, Nelder-Mead/nlminb/hjn
-#  #------------------------------------------
+#  ggsave("plot_comp_mhl_hjn.png",
+#         width = 6,
+#         height = 2.9,        dpi = 150)
 #  
-#  load("fit1_all.RData")
-#  load("textout.RData")
+#  rm(plot_comp_mhl_hjn)
 #  
-#  nsim <- 100
-#  hr <- textout[["meanhr"]] # Population average Oxford Hip Score
-#  
-#  for (i in c("Nelder-Mead", "nlminb", "hjn")) {
-#  
-#    # Component 1
-#    n1 <- nsim*exp(fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp1_delta_(Intercept)"]) /
-#      (1 + exp(fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp1_delta_(Intercept)"]))
-#    mean1 <- fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp1_beta_(Intercept)"] +
-#      hr*fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp1_beta_hr"]
-#    sd1 <- exp(fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp1_lnsigma"])
-#  
-#    # Component 2
-#    n2 <- nsim*(1 - exp(fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp1_delta_(Intercept)"]) /
-#                  (1 + exp(fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp1_delta_(Intercept)"])))
-#    mean2 <- fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp2_beta_(Intercept)"] +
-#      hr*fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp2_beta_hr"]
-#    sd2 <- exp(fit1_all[["fit"]][["zero"]][[i]][["coef"]]["Comp2_lnsigma"])
-#  
-#    plot_dens <- ggplot(data = data.frame(x = c(-1, 1)), aes(x)) +
-#      stat_function(fun = dnorm,
-#                    n = n1,
-#                    args = list(mean = mean1, sd = sd1)) +
-#      stat_function(fun = dnorm,
-#                    n = n2,
-#                    args = list(mean = mean2, sd = sd2)) +
-#      xlab("EQ-5D-3L utilities") +
-#      ylab("Density") +
-#      geom_vline(xintercept = c(-0.594, 0.883, 1),
-#                 linetype = "dashed",
-#                 colour = "gray") +
-#      coord_cartesian(ylim=c(0, 5), xlim = c(-1, 1)) +
-#      ggplot_theme
-#  
-#    ggsave(paste0("plot_dens_", i,".eps"),
-#           width = 6,
-#           height = 2.9)
-#  
-#    rm(plot_dens)
-#  
-#  }
-#  
-#  rm(i, hr, n1, mean1, sd1, n2, mean2, sd2, nsim, textout)
 #  rm(fit1_all)
 #  
 #  # Box plot of fitted values in R and STATA
@@ -530,9 +506,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #      guides(fill = guide_legend(nrow = 1, byrow = TRUE))
 #  )
 #  
-#  ggsave("plot_box_yhat.eps",
+#  ggsave("plot_box_yhat.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,        dpi = 150)
 #  
 #  rm(plotdf, plot_box_yhat)
 #  rm(fit1_cons, fit1_cstr_stata, fit1_nlminb)
@@ -590,9 +566,9 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #      guides(fill = guide_legend(nrow = 1, byrow = TRUE))
 #  )
 #  
-#  ggsave("plot_box_se.eps",
+#  ggsave("plot_box_se.png",
 #         width = 6,
-#         height = 2.9)
+#         height = 2.9,        dpi = 150)
 #  
 #  rm(plotdf, plot_box_se)
 #  rm(fit1_cons, fit1_cstr_stata, fit1_nlminb)
@@ -667,35 +643,31 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  
 #  load("fit1_all.RData")
 #  
-#  tmplist1 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["Nelder-Mead"]])
-#  tmplist2 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["nlminb"]])
-#  tmplist3 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["hjn"]])
+#  tmplist1 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["BFGS"]])
+#  tmplist2 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["Nelder-Mead"]])
+#  tmplist3 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["nlminb"]])
+#  tmplist4 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["hjn"]])
 #  
 #  tab_comp_coef <- cbind(tmplist1$table[, 1:3],
 #                         tmplist2$table[, 3],
-#                         tmplist3$table[, 3])
+#                         tmplist3$table[, 3],
+#                         tmplist4$table[, 3])
 #  
-#  names(tab_comp_coef)  <- c("", "", "Nelder-Mead", "nlminb", "hjn")
+#  tab_comp_coef <- tab_comp_coef[-nrow(tab_comp_coef),]
+#  
+#  tab_comp_coef <- rbind(tab_comp_coef,
+#                         c("ll", "",
+#                           round(fit1_all[["fit"]][["zero"]][["BFGS"]][["gof"]][["ll"]], 2),
+#                           round(fit1_all[["fit"]][["zero"]][["Nelder-Mead"]][["gof"]][["ll"]], 2),
+#                           round(fit1_all[["fit"]][["zero"]][["nlminb"]][["gof"]][["ll"]], 2),
+#                           round(fit1_all[["fit"]][["zero"]][["hjn"]][["gof"]][["ll"]], 2)))
+#  names(tab_comp_coef)  <- c("", "", "BFGS", "Nelder-Mead", "nlminb", "hjn")
 #  
 #  save(tab_comp_coef,
 #       file = "tab_comp_coef.RData",
 #       compress = TRUE)
 #  
-#  rm(tmplist1, tmplist2, tmplist3, tab_comp_coef)
-#  rm(fit1_all)
-#  
-#  # Summary table model 1, zero, Nelder-Mead
-#  #-----------------------------------------
-#  
-#  load("fit1_all.RData")
-#  
-#  tab_sum_mod1 <- rep_tab_fit(fit1_all[["fit"]][["zero"]][["Nelder-Mead"]])
-#  
-#  save(tab_sum_mod1,
-#       file = "tab_sum_mod1.RData",
-#       compress = TRUE)
-#  
-#  rm(tab_sum_mod1)
+#  rm(tmplist1, tmplist2, tmplist3, tmplist4, tab_comp_coef)
 #  rm(fit1_all)
 #  
 #  # Summary table model 1, zero, BFGS
@@ -857,6 +829,78 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 #  rm(stata_se, stata_yhat)
 #  rm(sumhat)
 #  
+#  # Comparison of R and STATA results
+#  #---------------------------------
+#  
+#  # Load summary tables
+#  load("tab_sum_mod1nlminb.RData")
+#  load("tab_sum_cstata.RData")
+#  load("tab_sum_const.RData")
+#  load("tab_sum_mod2stata.RData")
+#  load("tab_sum_stata1.RData")
+#  load("tab_sum_stata2.RData")
+#  load("tab_sum_stata3.RData")
+#  load("tab_sum_stata4.RData")
+#  
+#  # Model keys
+#  tabvec <- c("tab_sum_mod1nlminb",  "tab_sum_stata1",
+#              "tab_sum_cstata",     "tab_sum_stata2",
+#              "tab_sum_const", "tab_sum_stata3",
+#              "tab_sum_mod2stata", "tab_sum_stata4")
+#  
+#  # Matrix of coefficients
+#  tab_rstata_coef <- matrix(NA,
+#                 nrow = nrow(tab_sum_mod2stata$table),
+#                 ncol = length(tabvec) + 2)
+#  
+#  tab_rstata_coef[, 1:2] <- as.matrix(tab_sum_mod2stata$table[, 1:2])
+#  tab_rstata_coef[nrow(tab_rstata_coef), 2] <- ""
+#  
+#  # Matrix of standard errors
+#  tab_rstata_se <- tab_rstata_coef
+#  
+#  # Populate tables
+#  for (i in tabvec) {
+#    nr <- nrow(get(i)$table)
+#    for (j in 1:(nr - 1)) {
+#  
+#      lltmp <- format(
+#        as.numeric(gsub("[^0-9.-]", "", as.matrix(get(i)$table)[nr, 2])),
+#        big.mark = "'"
+#      )
+#  
+#      tab_rstata_coef[j, 2 + match(i, tabvec)] <- as.matrix(get(i)$table)[j, 3]
+#      tab_rstata_coef[nrow(tab_rstata_coef), 2 + match(i, tabvec)] <- lltmp
+#      tab_rstata_coef[nrow(tab_rstata_coef), 2] <- "ll"
+#  
+#      tab_rstata_se[j, 2 + match(i, tabvec)] <- as.matrix(get(i)$table)[j, 4]
+#      tab_rstata_se[nrow(tab_rstata_se), 2 + match(i, tabvec)] <- lltmp
+#      tab_rstata_se[nrow(tab_rstata_se), 2] <- "ll"
+#  
+#    }
+#    rm(nr)
+#  }
+#  rm(i, j, lltmp)
+#  
+#  tab_rstata_coef <- as.data.frame(rbind(c("", "", "R", "STATA", "R", "STATA", "R", "STATA", "R", "STATA"),
+#                              tab_rstata_coef))
+#  
+#  tab_rstata_se <- as.data.frame(rbind(c("", "", "R", "STATA", "R", "STATA", "R", "STATA", "R", "STATA"),
+#                              tab_rstata_se))
+#  
+#  names(tab_rstata_coef) <- names(tab_rstata_se) <- c("", "", "Ref. case 1", "", "Ref. case 2", "", "Ref. case 3", "", "Ref. case 4", "")
+#  
+#  save(tab_rstata_coef,
+#       file = "tab_rstata_coef.RData",
+#       compress = TRUE)
+#  
+#  save(tab_rstata_se,
+#       file = "tab_rstata_se.RData",
+#       compress = TRUE)
+#  
+#  rm(tab_rstata_coef, tab_rstata_se, tabvec, tab_sum_const, tab_sum_cstata, tab_sum_mod1nlminb, tab_sum_mod2stata,
+#     tab_sum_stata1, tab_sum_stata2, tab_sum_stata3, tab_sum_stata4)
+#  
 #  # Remove fit objects
 #  #-------------------
 #  
@@ -949,25 +993,27 @@ ggplot_theme <- theme(panel.background = element_rect(fill = "white",
 load("textout.RData")
 
 
+## ----plot-hist-obs, out.width="90%", fig.cap = "Frequency distribution of observed EQ-5D-3L utilities", echo = FALSE----
+knitr::include_graphics("plot_hist_obs.png")
+
 ## ----model1-fit, echo = TRUE, eval = FALSE------------------------------------
 #  library("aldvmm")
 #  
 #  fit <- aldvmm::aldvmm(eq5d ~ hr | 1,
 #                        data = df,
 #                        psi = c(0.883, -0.594),
-#                        ncmp = 2,
-#                        init.method = "zero",
-#                        optim.method = "BFGS")
+#                        ncmp = 2)
 #  
 #  summary(fit)
 #  
 #  pred <- predict(fit,
-#                  newdata = df,
 #                  se.fit = TRUE,
 #                  type = "fit")
 
 ## ----tab-sum-mod1-load, echo = FALSE------------------------------------------
+
 load("tab_sum_mod1bfgs.RData")
+
 textout[["mod1bfgs"]][["aic"]] <- format(
   as.numeric(
     gsub("[^0-9.-]", 
@@ -995,21 +1041,24 @@ textout[["mod1bfgs"]][["intp1"]] <- format(
   big.mark = "'"
 )
 
+rm(tab_sum_mod1bfgs)
 
-## ----tab-sum-mod1, echo = FALSE, results = "asis"-----------------------------
 
-print(xtable::xtable(tab_sum_mod1bfgs$table, 
-                     align = "lllrrrrrr",
-                     label = "tab:tab-sum-mod1bfgs",
-                     caption = 'Regression results from model 1 with "BFGS" optimization method and "zero" starting values'),
-      type = "latex",
-      include.rownames = FALSE,
-      hline.after = tab_sum_mod1bfgs$lindex,
-      comment = FALSE,
-      caption.placement = "top")
+## ----tab-sum-mod1-bfgs, echo = FALSE, results = "asis"------------------------
+
+load("tab_sum_mod1bfgs.RData")
+
+rep_tab_reg(tab_sum_mod1bfgs$table,
+          caption = 'Regression results from model 1 with "BFGS" optimization method and "zero" starting values')
 
 rm(tab_sum_mod1bfgs)
 
+
+## ----plot-hist-pred, out.width="90%", fig.cap = "Expected values from base case model", echo = FALSE----
+knitr::include_graphics("plot_hist_pred.png")
+
+## ----plot-comp-mhl-bfgs, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"BFGS\" with \"zero\" starting values", echo = FALSE----
+knitr::include_graphics("plot_comp_mhl_bfgs.png")
 
 ## ----tab-comp-ll-load, echo = FALSE-------------------------------------------
 load("tab_comp_ll.RData")
@@ -1036,17 +1085,10 @@ load("tab_comp_ll.RData")
 
 ## ----tab-comp-ll, echo = FALSE, results = 'asis'------------------------------
 
-print(xtable::xtable(tab_comp_ll, 
-                     align = paste0("l", 
-                                    paste(rep("r", ncol(tab_comp_ll)), 
-                                          collapse = "")),
-                     label = "tab:ll",
-                     caption = "Log-likelihood by optimization method"),
-      type = "latex",
-      include.rownames = TRUE,
-      hline.after = c(-1, 0, nrow(tab_comp_ll)),
-      comment = FALSE,
-      caption.placement = "top")
+knitr::kable(round(tab_comp_ll, 1),
+             format = "simple",
+             row.names = TRUE,
+             caption = 'Log-likelihood by optimization method')
 
 rm(tab_comp_ll)
 
@@ -1058,17 +1100,10 @@ load("tab_comp_time.RData")
 
 ## ----tab-comp-time, echo = FALSE, results = 'asis'----------------------------
 
-print(xtable::xtable(tab_comp_time, 
-                     align = paste0("l", 
-                                    paste(rep("r", ncol(tab_comp_time)), 
-                                          collapse = "")),
-                     label = "tab:time",
-                     caption = "Estimation time [minutes] by optimization method"),
-      type = "latex",
-      include.rownames = TRUE,
-      hline.after = c(-1, 0, nrow(tab_comp_time)),
-      comment = FALSE,
-      caption.placement = "top")
+knitr::kable(round(tab_comp_time, 2),
+             format = "simple",
+             row.names = TRUE,
+             caption = 'Estimation time [minutes] by optimization method')
 
 rm(tab_comp_time)
 
@@ -1077,44 +1112,14 @@ rm(tab_comp_time)
 
 load("tab_comp_coef.RData")
 
-load("tab_sum_mod1.RData")
+rep_tab_reg(tab_comp_coef,
+          caption = 'Regression results of model 1 with zero starting values in "BFGS", "Nelder-Mead", "nlminb" and "hjn" algorithms')
 
-print(xtable::xtable(tab_comp_coef, 
-                     align = "lllrrr",
-                     label = "tab:tab-comp-coef",
-                     caption = 'Regression results of model 1 with zero starting 
-                     values in "Nelder-Mead", "nlminb" and "hjn" algorithms'),
-      type = "latex",
-      include.rownames = FALSE,
-      hline.after = tab_sum_mod1$lindex,
-      comment = FALSE,
-      caption.placement = "top")
-
-rm(tab_comp_coef, tab_sum_mod1)
+rm(tab_comp_coef)
 
 
-## ----fig-comp-dens1_show, echo = TRUE, eval = FALSE---------------------------
-#  
-#  nsim <- 100
-#  hr <- 3.825244 # Population average Oxford Hip Score
-#  
-#  # Nelder-Mead parameter estimates
-#  n1    <- nsim*exp(3.8489)/(1 + exp(3.8489))
-#  mean1 <- -0.0575 + 0.2233 * hr
-#  sd1   <- exp(-1.8381)
-#  n2    <- nsim*(1 - exp(3.8489)/(1 + exp(3.8489)))
-#  mean2 <- 4.4022 + -0.9974 * hr
-#  sd2   <- exp(0.1250)
-#  
-#  # Make plot
-#  ggplot2::ggplot(data = data.frame(x = c(-1, 1)), aes(x)) +
-#    ggplot2::stat_function(fun = dnorm,
-#                           n = n1,
-#                           args = list(mean = mean1, sd = sd1)) +
-#    ggplot2::stat_function(fun = dnorm,
-#                           n = n2,
-#                           args = list(mean = mean2, sd = sd2))
-#  
+## ----plot-comp-pred, out.width="90%", fig.cap = "Deviation of expected values from \"BFGS\", \"Nelder-Mead\" and \"hjn\" versus \"nlminb\" with \"zero\" starting values", echo = FALSE----
+knitr::include_graphics("plot_comp_pred.png")
 
 ## ----tab-sum-cstr-load, echo = FALSE, results = "asis"------------------------
 
@@ -1149,15 +1154,8 @@ textout[["cstr"]][["ll"]] <- format(
 
 load("tab_sum_cstr.RData")
 
-print(xtable::xtable(tab_sum_cstr$table, 
-                     align = "lllrrrrrr",
-                     label = "tab:tab-sum-cstr",
-                     caption = 'Regression results of model 1 with the "L-BFGS-B" method, parameter constraints and user-defined starting values'),
-      type = "latex",
-      include.rownames = FALSE,
-      hline.after = tab_sum_cstr$lindex,
-      comment = FALSE,
-      caption.placement = "top")
+rep_tab_reg(tab_sum_cstr$table,
+          caption = 'Regression results of model 1 with the "L-BFGS-B" method, parameter constraints and user-defined starting values')
 
 rm(tab_sum_cstr)
 
@@ -1204,21 +1202,15 @@ textout[["comp"]][["hjn"]] <- format(
   big.mark = "'"
 )
 
-rm(tab_comp_coef)
+rm(tab_comp_coef, tab_sum_tobit)
 
 
 ## ----tab-sum-tobit, echo = FALSE, results = "asis"----------------------------
 
-print(xtable::xtable(tab_sum_tobit$table, 
-                     align = "lllrrrrrr",
-                     label = "tab:tab-sum-tobit",
-                     caption = 'Regression results of model 1 with 1 component, 
-                     zero starting values in "nlminb" algorithm'),
-      type = "latex",
-      include.rownames = FALSE,
-      hline.after = tab_sum_tobit$lindex,
-      comment = FALSE,
-      caption.placement = "top")
+load("tab_sum_tobit.RData")
+
+rep_tab_reg(tab_sum_tobit$table,
+          caption = 'Regression results of model 1 with 1 component, zero starting values in "nlminb" algorithm')
 
 rm(tab_sum_tobit)
 
@@ -1250,135 +1242,58 @@ textout[["mod2"]][["aic"]] <- format(
   big.mark = "'"
 )
 
+rm(tab_sum_mod2)
 
 
 ## ----tab-sum-mod2, echo = FALSE, results = "asis"-----------------------------
 
-print(xtable::xtable(tab_sum_mod2$table, 
-                     align = "lllrrrrrr",
-                     label = "tab:tab-sum-mod2",
-                     caption = 'Regression results of model 2 with user-defined 
-                     starting values in the "nlminb" algorithm'),
-      type = "latex",
-      include.rownames = FALSE,
-      hline.after = tab_sum_mod2$lindex,
-      comment = FALSE,
-      caption.placement = "top")
+load("tab_sum_mod2.RData")
+
+rep_tab_reg(tab_sum_mod2$table,
+          caption = 'Regression results of model 2 with user-defined starting values in the "nlminb" algorithm')
 
 rm(tab_sum_mod2)
 
 
 ## ----tab-calc-stata, echo = FALSE, results = "asis"---------------------------
 
-# Load summary tables
-load("tab_sum_mod1nlminb.RData")
-load("tab_sum_cstata.RData")
-load("tab_sum_const.RData")
-load("tab_sum_mod2stata.RData")
-load("tab_sum_stata1.RData")
-load("tab_sum_stata2.RData")
-load("tab_sum_stata3.RData")
-load("tab_sum_stata4.RData")
 
-# Model keys
-tabvec <- c("tab_sum_mod1nlminb",  "tab_sum_stata1", 
-            "tab_sum_cstata",     "tab_sum_stata2", 
-            "tab_sum_const", "tab_sum_stata3",
-            "tab_sum_mod2stata", "tab_sum_stata4")
 
-# Matrix of coefficients
-ctab <- matrix(NA, 
-               nrow = nrow(tab_sum_mod2stata$table),
-               ncol = length(tabvec) + 2)
 
-ctab[, 1:2] <- as.matrix(tab_sum_mod2stata$table[, 1:2])
-ctab[nrow(ctab), 2] <- ""
+## ----tab-comp-stata, echo = FALSE, results = "asis"---------------------------
 
-# Matrix of standard errors
-stab <- ctab
+load("tab_rstata_coef.RData")
 
-# Populate tables
-for (i in tabvec) {
-  nr <- nrow(get(i)$table)
-  for (j in 1:(nr - 1)) {
-    
-    lltmp <- format( 
-      as.numeric(gsub("[^0-9.-]", "", as.matrix(get(i)$table)[nr, 2])), 
-      big.mark = "'"
-    )
-    
-    ctab[j, 2 + match(i, tabvec)] <- as.matrix(get(i)$table)[j, 3]
-    ctab[nrow(ctab), 2 + match(i, tabvec)] <- lltmp
-    ctab[nrow(ctab), 2] <- "ll"
-    
-    stab[j, 2 + match(i, tabvec)] <- as.matrix(get(i)$table)[j, 4]
-    stab[nrow(stab), 2 + match(i, tabvec)] <- lltmp
-    stab[nrow(stab), 2] <- "ll"
-    
-  }
-  rm(nr)
-}
-rm(i, j, lltmp)
+rep_tab_reg(tab_rstata_coef,
+          caption = 'Comparison of point estimates to the results of the STATA package')
 
-ctab <- rbind(c("", "", "(1)", "", "(2)", "", "(3)", "", "(4)", ""),
-              c("", "", "R", "STATA", "R", "STATA", "R", "STATA", "R", "STATA"),
-              ctab)
+rm(tab_rstata_coef)
 
-stab <- rbind(c("", "", "(1)", "", "(2)", "", "(3)", "", "(4)", ""),
-              c("", "", "R", "STATA", "R", "STATA", "R", "STATA", "R", "STATA"),
-              stab)
 
-lindex <- tab_sum_mod2stata$lindex + 2
-lindex[1] <- -1
+## ----tab-compse-stata, echo = FALSE, results = "asis"-------------------------
 
-print(xtable::xtable(ctab,
-                     align = paste0("lll", 
-                                    paste(rep("r", length(tabvec)), 
-                                          collapse = "")),
-                     label = "tab:tab-comp-stata",
-                     caption = "Comparison of point estimates to the results of the STATA package"),
-      type = "latex",
-      include.colnames = FALSE,
-      include.rownames = FALSE,
-      hline.after = lindex,
-      comment = FALSE,
-      caption.placement = "top")
+load("tab_rstata_se.RData")
 
-print(xtable::xtable(stab,
-                     align = paste0("lll", 
-                                    paste(rep("r", length(tabvec)), 
-                                          collapse = "")),
-                     label = "tab:tab-compse-stata",
-                     caption = "Comparison of standard errors to the results of the STATA package."),
-      type = "latex",
-      include.colnames = FALSE,
-      include.rownames = FALSE,
-      hline.after = lindex,
-      comment = FALSE,
-      caption.placement = "top",
-      table.placement = "!ht")
+rep_tab_reg(tab_rstata_se,
+          caption = 'Comparison of standard errors to the results of the STATA package')
 
-rm(tab_sum_const, tab_sum_cstata, tab_sum_mod1nlminb, tab_sum_mod2stata,
-   tab_sum_stata1, tab_sum_stata2, tab_sum_stata3, tab_sum_stata4)
-rm(ctab, stab, lindex, tabvec)
+rm(tab_rstata_se)
 
+
+## ----box-pred-yhat-stata, out.width="90%", fig.cap = "Fitted values in R and STATA", echo = FALSE----
+knitr::include_graphics("plot_box_yhat.png")
+
+## ----box-pred-se-stata, out.width="90%", fig.cap = "Standard errors of fitted values in R and STATA", echo = FALSE----
+knitr::include_graphics("plot_box_se.png")
 
 ## ----tab-pred-stata-yhat, echo = FALSE, results = "asis"----------------------
 
 load("tab_diff_yhat.RData")
 
-print(xtable::xtable(tab_diff_yhat, 
-                     align = paste0("l", 
-                                    paste(rep("r", ncol(tab_diff_yhat)), 
-                                          collapse = "")),
-                     label = "tab:compyhat",
-                     caption = "Summary statistics of differences of fitted values in R and STATA (positive values suggest larger values in STATA)",
-                     digits = 6),
-      type = "latex",
-      include.rownames = TRUE,
-      hline.after = c(-1, 0, nrow(tab_diff_yhat)),
-      comment = FALSE,
-      caption.placement = "top")
+knitr::kable(tab_diff_yhat,
+             format = "simple",
+             row.names = TRUE,
+             caption = 'Summary statistics of differences of fitted values in R and STATA (positive values suggest larger values in STATA)')
 
 rm(tab_diff_yhat)
 
@@ -1387,18 +1302,10 @@ rm(tab_diff_yhat)
 
 load("tab_diff_se.RData")
 
-print(xtable::xtable(tab_diff_se, 
-                     align = paste0("l", 
-                                    paste(rep("r", ncol(tab_diff_se)), 
-                                          collapse = "")),
-                     label = "tab:compse",
-                     caption = "Summary statistics of differences of standard errors of fitted values in R and STATA (positive values suggest larger values in STATA)",
-                     digits = 6),
-      type = "latex",
-      include.rownames = TRUE,
-      hline.after = c(-1, 0, nrow(tab_diff_se)),
-      comment = FALSE,
-      caption.placement = "top")
+knitr::kable(tab_diff_se,
+             format = "simple",
+             row.names = TRUE,
+             caption = 'Summary statistics of differences in standard errors of fitted values in R and STATA (positive values suggest larger values in STATA)')
 
 rm(tab_diff_se)
 
@@ -1520,35 +1427,27 @@ rm(tab_diff_se)
 #                data = df,
 #                psi = c(-0.594, 0.883))
 #  
-#  # Calculate clustered standard errors
-#  #------------------------------------
+#  # Calculate robust and clustered standard errors
+#  #-----------------------------------------------
 #  
-#  vc <- sandwich::vcovCL(fit, cluster = df$grp)
+#  vc1 <- sandwich::sandwich(fit)
+#  vc2 <- sandwich::vcovCL(fit, cluster = ~ grp)
+#  vc3 <- sandwich::vcovPL(fit, cluster = ~ grp)
+#  vc4 <- sandwich::vcovHAC(fit, cluster = ~ grp)
+#  vc5 <- sandwich::vcovBS(fit)
+#  vc6 <- sandwich::vcovBS(fit, cluster = ~ grp)
 #  
 #  # Calculate test statistics
 #  #--------------------------
 #  
-#  lmtest::coeftest(fit, vcov = vc)
+#  lmtest::coeftest(fit)
+#  lmtest::coeftest(fit, vcov = vc1)
+#  lmtest::coeftest(fit, vcov = vc2)
+#  lmtest::coeftest(fit, vcov = vc3)
+#  lmtest::coeftest(fit, vcov = vc4)
+#  lmtest::coeftest(fit, vcov = vc5)
+#  lmtest::coeftest(fit, vcov = vc6)
 #  
-
-## ----tab-comp-cov, echo = FALSE, results = 'asis'-----------------------------
-
-load("tab_comp_cov.RData")
-
-print(xtable::xtable(tab_comp_cov, 
-                     align = paste0("l", 
-                                    paste(rep("r", ncol(tab_comp_cov)), 
-                                          collapse = "")),
-                     label = "tab:cov",
-                     caption = "Covariance matrix by optimization method"),
-      type = "latex",
-      include.rownames = TRUE,
-      hline.after = c(-1, 0, nrow(tab_comp_cov)),
-      comment = FALSE,
-      caption.placement = "top")
-
-rm(tab_comp_cov)
-
 
 ## ----mhl-show, echo = TRUE, eval = FALSE--------------------------------------
 #  # Number of percentiles
@@ -1590,8 +1489,29 @@ rm(tab_comp_cov)
 #                                       group = factor(outcome))) +
 #    geom_line(aes(linetype = factor(outcome)))
 
+## ----tab-comp-cov, echo = FALSE, results = 'asis'-----------------------------
+
+load("tab_comp_cov.RData")
+
+knitr::kable(tab_comp_cov,
+             format = "simple",
+             row.names = FALSE,
+             caption = 'Covariance matrix by optimization method')
+
+rm(tab_comp_cov)
+
+
+## ----plot-comp-mhl-nm, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"Nelder-Mead\" with \"zero\" starting values", echo = FALSE----
+knitr::include_graphics("plot_comp_mhl_nm.png")
+
+## ----plot-comp-mhl-nlminb, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"nlminb\" with \"zero\" starting values", echo = FALSE----
+knitr::include_graphics("plot_comp_mhl_nlminb.png")
+
+## ----plot-comp-mhl-hjn, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"hjn\" with \"zero\" starting values", echo = FALSE----
+knitr::include_graphics("plot_comp_mhl_hjn.png")
+
 ## ----tab-comp-stata-show, echo = TRUE, eval = FALSE---------------------------
-#  # (1) Reference case 1 with default optimization settings
+#  # (1) Reference case 1: Model 1 with default optimization settings
 #  fit1_default <- aldvmm::aldvmm(eq5d ~ hr | 1,
 #                                 data = df,
 #                                 psi = c(0.883, -0.594),
@@ -1599,7 +1519,7 @@ rm(tab_comp_cov)
 #                                 init.method = "zero",
 #                                 optim.method = "nlminb")
 #  
-#  # (2) Reference case 1 with user-defined initial values and constraints on parameters
+#  # (2) Reference case 2: Model 1 with user-defined initial values and constraints on parameters
 #  init <- c(0,    0,   0,   0,    0,    0,    0.7283)
 #  lo   <- c(-Inf, -Inf, -3,  -Inf, -Inf, -3, -Inf)
 #  hi   <- c(Inf,  Inf,  Inf, Inf,  Inf,  Inf,  Inf)
@@ -1612,7 +1532,7 @@ rm(tab_comp_cov)
 #                              init.lo = lo,
 #                              init.hi = hi)
 #  
-#  # (3) Reference case 1 with initial values from constant-only model
+#  # (3) Reference case 3: Model 1 with initial values from constant-only model
 #  fit1_const <- aldvmm::aldvmm(eq5d ~ hr | 1,
 #                               data = df,
 #                               psi = c(0.883, -0.594),
@@ -1620,7 +1540,7 @@ rm(tab_comp_cov)
 #                               init.method = "constant",
 #                               optim.method = "nlminb")
 #  
-#  # (4) Reference case 2 with user-defined initial values.
+#  # (4) Reference case 4: Model 2 with user-defined initial values
 #  init <- c(-.40293118, .30502755, .22614716, .14801581, -.70755741, 0,
 #            -1.2632051, -2.4541401)
 #  
@@ -1632,20 +1552,20 @@ rm(tab_comp_cov)
 #                         optim.method = "nlminb")
 
 ## ----stata_code, echo = TRUE, eval = FALSE------------------------------------
-#  * (1) Reference case 1
+#  * (1) Reference case 1: Model 1 with default optimization settings
 #  aldvmm eq5d hr, ncomponents(2)
 #  
-#  * (2) Reference case 1 with constraints
+#  * (2) Reference case 2: Model 1 with user-defined initial values and constraints on parameters
 #  matrix  input a = (0, 0, 0, 0, 0, 0, 0.7283)
 #  constraint 1 [Comp_2]:hr10 = 0
 #  constraint 2 [Comp_2]:_cons = 100
 #  constraint 3 [lns_2]:_cons = 1e-30
 #  aldvmm eq5d hr, ncomp(2) from(a) c(1 2 3)
 #  
-#  * (3) Reference case 1 initital values from constant-only model
+#  * (3) Reference case 3: Model 1 with initial values from constant-only model
 #  aldvmm eq5d hr, ncomp(2) inim(cons)
 #  
-#  * (4) Reference case 2 user-defined initial values
+#  * (4) Reference case 4: Model 2 with user-defined initial values
 #  matrix  input start = (.14801581, .22614716, .30502755, -.40293118, 0,
 #                         -.70755741, -2.4541401, -1.2632051)
 #  aldvmm eq5d hr, ncomp(2) prob(hr) from(start)
