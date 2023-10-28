@@ -993,7 +993,7 @@ warnings(file = "./R-warnings.txt")
 load("textout.RData")
 
 
-## ----plot-hist-obs, out.width="90%", fig.cap = "Frequency distribution of observed EQ-5D-3L utilities", echo = FALSE----
+## ----plot-hist-obs, out.width = "90%", fig.cap = "Frequency distribution of observed EQ-5D-3L utilities", echo = FALSE----
 knitr::include_graphics("plot_hist_obs.png")
 
 ## ----model1-fit, echo = TRUE, eval = FALSE------------------------------------
@@ -1054,10 +1054,10 @@ rep_tab_reg(tab_sum_mod1bfgs$table,
 rm(tab_sum_mod1bfgs)
 
 
-## ----plot-hist-pred, out.width="90%", fig.cap = "Expected values from base case model", echo = FALSE----
+## ----plot-hist-pred, out.width = "90%", fig.cap = "Expected values from base case model", echo = FALSE----
 knitr::include_graphics("plot_hist_pred.png")
 
-## ----plot-comp-mhl-bfgs, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"BFGS\" with \"zero\" starting values", echo = FALSE----
+## ----plot-comp-mhl-bfgs, out.width = "90%", fig.cap = "Mean residuals over deciles of expected values, BFGS with zero starting values", echo = FALSE----
 knitr::include_graphics("plot_comp_mhl_bfgs.png")
 
 ## ----tab-comp-ll-load, echo = FALSE-------------------------------------------
@@ -1113,12 +1113,12 @@ rm(tab_comp_time)
 load("tab_comp_coef.RData")
 
 rep_tab_reg(tab_comp_coef,
-          caption = 'Regression results of model 1 with zero starting values in "BFGS", "Nelder-Mead", "nlminb" and "hjn" algorithms')
+          caption = 'Regression results of model 1 with zero starting values in BFGS, Nelder-Mead, nlminb and hjn algorithms')
 
 rm(tab_comp_coef)
 
 
-## ----plot-comp-pred, out.width="90%", fig.cap = "Deviation of expected values from \"BFGS\", \"Nelder-Mead\" and \"hjn\" versus \"nlminb\" with \"zero\" starting values", echo = FALSE----
+## ----plot-comp-pred, out.width = "90%", fig.cap = "Deviation of expected values from BFGS, Nelder-Mead and hjn versus nlminb with zero starting values", echo = FALSE----
 knitr::include_graphics("plot_comp_pred.png")
 
 ## ----tab-sum-cstr-load, echo = FALSE, results = "asis"------------------------
@@ -1155,7 +1155,7 @@ textout[["cstr"]][["ll"]] <- format(
 load("tab_sum_cstr.RData")
 
 rep_tab_reg(tab_sum_cstr$table,
-          caption = 'Regression results of model 1 with the "L-BFGS-B" method, parameter constraints and user-defined starting values')
+          caption = 'Regression results of model 1 with the L-BFGS-B method, parameter constraints and user-defined starting values')
 
 rm(tab_sum_cstr)
 
@@ -1210,7 +1210,7 @@ rm(tab_comp_coef, tab_sum_tobit)
 load("tab_sum_tobit.RData")
 
 rep_tab_reg(tab_sum_tobit$table,
-          caption = 'Regression results of model 1 with 1 component, zero starting values in "nlminb" algorithm')
+          caption = 'Regression results of model 1 with 1 component, zero starting values in nlminb algorithm')
 
 rm(tab_sum_tobit)
 
@@ -1250,7 +1250,7 @@ rm(tab_sum_mod2)
 load("tab_sum_mod2.RData")
 
 rep_tab_reg(tab_sum_mod2$table,
-          caption = 'Regression results of model 2 with user-defined starting values in the "nlminb" algorithm')
+          caption = 'Regression results of model 2 with user-defined starting values in the nlminb algorithm')
 
 rm(tab_sum_mod2)
 
@@ -1501,13 +1501,13 @@ knitr::kable(tab_comp_cov,
 rm(tab_comp_cov)
 
 
-## ----plot-comp-mhl-nm, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"Nelder-Mead\" with \"zero\" starting values", echo = FALSE----
+## ----plot-comp-mhl-nm, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, Nelder-Mead with zero starting values", echo = FALSE----
 knitr::include_graphics("plot_comp_mhl_nm.png")
 
-## ----plot-comp-mhl-nlminb, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"nlminb\" with \"zero\" starting values", echo = FALSE----
+## ----plot-comp-mhl-nlminb, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, nlminb with zero starting values", echo = FALSE----
 knitr::include_graphics("plot_comp_mhl_nlminb.png")
 
-## ----plot-comp-mhl-hjn, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, \"hjn\" with \"zero\" starting values", echo = FALSE----
+## ----plot-comp-mhl-hjn, out.width="90%", fig.cap = "Mean residuals over deciles of expected values, hjn with zero starting values", echo = FALSE----
 knitr::include_graphics("plot_comp_mhl_hjn.png")
 
 ## ----tab-comp-stata-show, echo = TRUE, eval = FALSE---------------------------
